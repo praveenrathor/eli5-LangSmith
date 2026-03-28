@@ -2,15 +2,20 @@ from openai import OpenAI
 from langsmith import traceable
 from langsmith.wrappers import wrap_openai
 from dotenv import load_dotenv
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_tavily import TavilySearch
+#from langchain_community.tools.tavily_search import TavilySearchResults
+import os
 
 
 # Load environment variables
 load_dotenv(dotenv_path=".env", override=True)
 
+api_key=os.getenv("GITHUB_TOKEN")
+base_url="https://models.github.ai/inference"
+model_name="openai/gpt-4o-mini"
 
 # Initialize web search tool
-web_search_tool = TavilySearchResults(max_results=1)
+web_search_tool = TavilySearch(max_results=1)
 
 # Define prompt template
 prompt = """You are a professor and expert in explaining complex topics in a way that is easy to understand. 
@@ -25,13 +30,20 @@ Answer:"""
 # print("Prompt Template: ", prompt)
 
 
-# Create Application
-openai_client = wrap_openai(OpenAI())
+# Create Application 
+openai_client = wrap_openai(OpenAI(
+    base_url=base_url,
+    api_key=api_key
+))
+#openai_client = OpenAI(
+#    base_url=base_url,
+#    api_key=api_key
+#)
 
 @traceable
 def search(question):
     web_docs = web_search_tool.invoke({"query": question})
-    web_results = "\n".join([d["content"] for d in web_docs])
+    web_results = web_docs #"\n".join([d["content"] for d in web_docs])
     return web_results
     
 @traceable
@@ -43,7 +55,7 @@ def explain(question, context):
             {"role": "system", "content": formatted},
             {"role": "user", "content": question},
         ],
-        model="gpt-3.5-turbo",
+        model=model_name,
     )
     return completion.choices[0].message.content
 
@@ -54,5 +66,6 @@ def eli5(question):
     return answer
 
 # Run the application
-question = "What is trustcall?"
+question = "What is complexity economics?"
+
 print(eli5(question))
