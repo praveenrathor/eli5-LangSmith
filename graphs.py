@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from typing import List
 from typing_extensions import TypedDict
-from langchain.schema import Document
+from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
@@ -11,7 +11,11 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 # Load environment variables
 load_dotenv(dotenv_path=".env", override=True)
 
-llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+api_key=os.getenv("GITHUB_TOKEN")
+base_url="https://models.github.ai/inference"
+model_name="openai/gpt-4o-mini"
+
+llm = ChatOpenAI(base_url=base_url, api_key=api_key, model=model_name, temperature=0)
 
 # Initialize web search tool
 web_search_tool = TavilySearchResults(max_results=1)
